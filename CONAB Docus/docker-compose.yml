@@ -1,0 +1,35 @@
+version: '3.8'
+
+services:
+  brazil-ag-api:
+    build: .
+    container_name: brazil-ag-api
+    ports:
+      - "8000:8000"
+    environment:
+      - ADMIN_API_KEY=${ADMIN_API_KEY:-farmhandpro-refresh-2025}
+      - PYTHONUNBUFFERED=1
+    volumes:
+      - ./brazil_ag_cache.json:/app/brazil_ag_cache.json
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    restart: unless-stopped
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.brazil-ag.rule=Host(`api.farmhandpro.com`)"
+      - "traefik.http.services.brazil-ag.loadbalancer.server.port=8000"
+
+  # Optional: Redis for distributed caching
+  # redis:
+  #   image: redis:alpine
+  #   container_name: brazil-ag-redis
+  #   ports:
+  #     - "6379:6379"
+  #   restart: unless-stopped
+
+networks:
+  default:
+    name: farmhandpro-network
